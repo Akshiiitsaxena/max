@@ -42,9 +42,17 @@ def get_pdf_info(filepath: str) -> dict:
     except subprocess.CalledProcessError as e:
         return {"error": f"Failed to read PDF: {e.stderr}"}
 
-    
 
-                
+def rotate_pages(filepath: str, output_path: str, pages: str, angle: int) -> str:
+    try:
+        cmd = ["pdfcpu", "rotate", "-pages", pages, filepath, str(angle), output_path]
         
+        # check param throws err if result.returncode is non-zero
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return {"status": "success", "output_file": output_path}
+    
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "details": e.stderr.strip()}
         
-        
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
