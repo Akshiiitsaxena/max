@@ -1,6 +1,6 @@
 import subprocess
 import os
-from typing import List
+from typing import Dict, List
 
 def list_pdf_files(directory: str = ".") -> List[str]:
     # Return all pdf files in the curr director
@@ -54,5 +54,31 @@ def rotate_pages(filepath: str, output_path: str, pages: str, angle: int) -> str
     except subprocess.CalledProcessError as e:
         return {"status": "error", "details": e.stderr.strip()}
         
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
+
+def remove_pages(filepath: str, output_path: str, pages: str) -> Dict:
+    try:
+        cmd = ["pdfcpu", "pages", "remove", "-pages", pages, filepath, output_path]
+    
+        # check param throws err if result.returncode is non-zero
+        subprocess.run(cmd, capture_output=True, text=True)
+        return {"status": "success", "output_file": output_path}
+    
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "details": e.stderr.strip()}    
+   
+    except Exception as e:
+        return {"status": "error", "details": str(e)}
+
+def merge_pdfs(output_path: str, input_paths: List[str]) -> Dict:
+    try:
+        cmd = ["pdfcpu", "merge", output_path] + input_paths
+        subprocess.run(cmd, capture_output=True, text=True)
+        return {"status": "success", "output_file": output_path}
+    
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "details": e.stderr.strip()}  
+    
     except Exception as e:
         return {"status": "error", "details": str(e)}
