@@ -71,7 +71,7 @@ def run_max(user_query: str):
     try:
         agent_executor = get_agent_executor()
         result = agent_executor.invoke({"input": user_query})
-        return result
+        return result["output"]
     
     except Exception as e:
         return f"Max crashed: {str(e)}"
