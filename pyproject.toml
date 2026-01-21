@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "max-pdf"
+version = "0.1.0"
+description = "AI-powered CLI tool for PDF manipulation"
+authors = [{ name = "Akshit Saxena", email = "saxn.akshit@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "langchain>=0.3.0",
+    "langchain-google-genai>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+max = "max_pdf.cli:app"
