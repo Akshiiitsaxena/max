@@ -1,6 +1,31 @@
 import subprocess
 import os
-from typing import Dict, List
+from typing import Dict, List, Union
+
+from max_pdf.ui import global_status, console
+
+# helpers
+
+def _ensure_pdf_extension(filename: str) -> str:
+    # append .pdf if missing
+    if not filename.lower().endswith('.pdf'):
+        return f"{filename}.pdf"
+    return filename
+
+def _validate_inputs(filepaths: List[str]) -> Union[bool, str]:
+    # check if input files exists
+    missing = []
+    
+    for fp in filepaths:
+        if not os.path.exists(fp):
+            missing.append(fp)
+    
+    if missing:
+        return f"Err: these files not found: {missing}"
+    
+    return True
+
+# tools
 
 def list_pdf_files(directory: str = ".") -> List[str]:
     # Return all pdf files in the curr director
@@ -82,3 +107,12 @@ def merge_pdfs(output_path: str, input_paths: List[str]) -> Dict:
     
     except Exception as e:
         return {"status": "error", "details": str(e)}
+
+def ask_human(question: str) -> str:
+    """Asks the human user for a clarifying question."""
+    
+    global_status.stop()
+    response = console.input(f"\n[bold dark_orange]🤖 Max:[/bold dark_orange] {question}\n> ")
+    global_status.start()
+    
+    return response
