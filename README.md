@@ -33,7 +33,7 @@ Scanned a document upside down? Or just need page 3?
 Decrypt sensitive files without uploading them to the cloud. Max asks for the password securely if you don't provide it.
 
 ```bash
-> max unlock my_w2_form
+> max remove the password from my_w2_form
 ```
 
 ## Getting Started
