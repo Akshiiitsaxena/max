@@ -118,7 +118,3 @@ Invoking: `rotate_pages` with `{'pages': '1', 'output_path': 'rotated_modified.p
 ---
 
 #### Built because I was tired of `ilovepdf.com`.
-
-```
-
-```
