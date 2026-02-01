@@ -133,7 +133,7 @@ def merge_pdfs(output_path: str, input_paths: List[str]) -> Dict:
     
     try:
         cmd = ["pdfcpu", "merge", output_path] + cleaned_paths
-        subprocess.run(cmd, capture_output=True, text=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
         return {"status": "success", "output_file": output_path}
     
     except subprocess.CalledProcessError as e:
@@ -141,12 +141,41 @@ def merge_pdfs(output_path: str, input_paths: List[str]) -> Dict:
     
     except Exception as e:
         return {"status": "error", "details": str(e)}
+    
+def decrypt_pdf(filepath: str, output_path: str, password: str = "") -> Dict:
+    filepath = _resolve_filename(filepath)
+    if not output_path.lower().endswith('.pdf'):
+        output_path += ".pdf"
+
+    if _validate_inputs([filepath]) != True: 
+        return {"error": _validate_inputs([filepath])}
+
+    try:
+        # pdfcpu decrypt -upw "pass" input output
+        cmd = ["pdfcpu", "decrypt"]
+        
+        if password:
+            cmd.extend(["-upw", password])
+            
+        cmd.extend([filepath, output_path])
+
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        if _verify_output(output_path) != True:
+             return {"error": "Output verification failed"}
+
+        return {"status": "success", "output_file": output_path}
+    
+    except subprocess.CalledProcessError as e:
+        return {"error": f"Decryption failed (Wrong password?): {e.stderr.strip()}"}
+    except Exception as e:
+        return {"error": str(e)}
 
 def ask_human(question: str) -> str:
     """Asks the human user for a clarifying question."""
     
     global_status.stop()
-    response = console.input(f"\n[bold dark_orange]🤖 Max:[/bold dark_orange] {question}\n> ")
+    response = console.input(f"\n[bold dark_orange]🐱 Max:[/bold dark_orange] {question}\n> ")
     global_status.start()
     
     return response

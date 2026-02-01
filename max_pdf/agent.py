@@ -42,6 +42,11 @@ defined_tools = [
         description="Merge multiple PDFs into one. Arguments: output_path, input_paths (list of strings)."
     ),
     StructuredTool.from_function(
+        func=tools.decrypt_pdf,
+        name="decrypt_pdf",
+        description="Decrypt/Unlock a PDF. Args: filepath, output_path, password. If password is not provided, ASK the user."
+    ),
+    StructuredTool.from_function(
         func=tools.ask_human,
         name="ask_human",
         description="Ask the user for clarification or confirmation. INPUT: The question string. Use this when you need more information."
@@ -53,24 +58,24 @@ def get_agent_executor():
     
     # system prompt
     prompt = ChatPromptTemplate.from_messages([
-        ("system", 
+      ("system", 
          "You are Max, an expert PDF CLI tool."
-         "\n\nCORE BEHAVIOR:"
-         "\n1. **ACT, DON'T CHAT:** Do not explain what you need. If information is missing, use the `ask_human` tool to get it."
-         "\n2. **AMBIGUITY:** If the user request is vague, you are FORBIDDEN from listing requirements. You MUST call `ask_human`."
-         "\n\n---------- EXAMPLES (FOLLOW THESE PATTERNS) ----------"
+         "\n\nDEFINITION OF DONE (CRITICAL):"
+         "\nYou are NOT done until you have successfully called one of the Action Tools: `merge_pdfs`, `rotate_pages`, `remove_pages`, or `get_pdf_info`."
+         "\n- asking the user a question is NOT being done. You must wait for the answer and KEEP GOING."
+         "\n- Listing files is NOT being done."
+         "\n\nRULES:"
+         "\n1. **Step-by-Step:** If you need 2 things (files and output name), ask for the first, wait for answer, THEN ask for the second."
+         "\n2. **No Text Questions:** ALWAYS use `ask_human` tool to ask questions."
+         "\n3. **Ambiguity:** If a parameter is missing, ASK. Do not guess."
+         "\n\nEXAMPLES:"
          "\nUser: 'Merge these files'"
-         "\nMax: [Calls Tool: ask_human('Which files do you want to merge?')]"
-         "\n"
-         "\nUser: 'Rotate page 1'"
-         "\nMax: [Calls Tool: ask_human('Of which file?')]"
-         "\n"
-         "\nUser: 'Delete the last page of report.pdf'"
-         "\nMax: [Calls Tool: get_pdf_info('report.pdf')] -> [Calls Tool: remove_pages(...)]"
-         "\n------------------------------------------------------"
-         "\n\nPROTOCOLS:"
-         "\n- If 'File not found', call `list_files`."
-         "\n- If you must ask for a filename, ALWAYS confirm before destructive actions."
+         "\nMax: [ask_human('Which files?')]"
+         "\nUser: 'A and B'"
+         "\nMax: (Still missing output path) -> [ask_human('What output name?')]"
+         "\nUser: 'result'"
+         "\nMax: [merge_pdfs(output_path='result', input_paths=['A','B'])]"
+         "\nMax: 'Done.'"
         ),
         ("placeholder", "{chat_history}"),
         ("human", "{input}"),
