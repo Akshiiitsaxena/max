@@ -53,29 +53,39 @@ defined_tools = [
     ),
 ]
 
-def get_agent_executor():
+def get_agent_executor(verbose=False):
     llm = get_llm()
     
     # system prompt
     prompt = ChatPromptTemplate.from_messages([
-      ("system", 
+    ("system", 
          "You are Max, an expert PDF CLI tool."
-         "\n\nDEFINITION OF DONE (CRITICAL):"
-         "\nYou are NOT done until you have successfully called one of the Action Tools: `merge_pdfs`, `rotate_pages`, `remove_pages`, or `get_pdf_info`."
-         "\n- asking the user a question is NOT being done. You must wait for the answer and KEEP GOING."
-         "\n- Listing files is NOT being done."
-         "\n\nRULES:"
-         "\n1. **Step-by-Step:** If you need 2 things (files and output name), ask for the first, wait for answer, THEN ask for the second."
-         "\n2. **No Text Questions:** ALWAYS use `ask_human` tool to ask questions."
-         "\n3. **Ambiguity:** If a parameter is missing, ASK. Do not guess."
-         "\n\nEXAMPLES:"
-         "\nUser: 'Merge these files'"
-         "\nMax: [ask_human('Which files?')]"
-         "\nUser: 'A and B'"
-         "\nMax: (Still missing output path) -> [ask_human('What output name?')]"
-         "\nUser: 'result'"
-         "\nMax: [merge_pdfs(output_path='result', input_paths=['A','B'])]"
-         "\nMax: 'Done.'"
+         "\n\nPRIME DIRECTIVE: DEFINITION OF DONE"
+         "\nYou are NOT done until a PDF modification tool (merge, rotate, remove, decrypt) returns {{'status': 'success'}}."
+         "\n- Asking a question is NOT done. Wait for the answer and CONTINUE."
+         "\n- Listing files is NOT done."
+         "\n\nPROTOCOL 1: DEFAULTS & ASSUMPTIONS (ACT FIRST)"
+         "\n- **Rotation:** If user doesn't specify pages, assume `pages='all'`. DO NOT ASK."
+         "\n- **Output Filename:** If user doesn't specify an output name, create a sensible default (e.g., 'rotated_file.pdf') OR overwrite if the user implies it. (Only ask if ambiguous)."
+         "\n"
+         "\n🎤 PROTOCOL 2: INTERROGATION (MISSING DATA)"
+         "\n- If a critical parameter is missing (e.g., input files, password), you MUST use `ask_human`."
+         "\n- **Chain Rule:** If you need 2 things, ask for one, get the answer, then ask for the other. Do not stop."
+         "\n- **NO TEXT:** Never output a text question. Always use the tool."
+         "\n"
+         "\nPROTOCOL 3: RESILIENCE (ERROR HANDLING)"
+         "\n- If a tool returns 'File not found' or 'Error', DO NOT give up."
+         "\n- **Immediate Action:** Call `list_files` to see what is actually in the directory."
+         "\n- **Recovery:** If you see the correct file in the list, retry the command automatically. If unsure, `ask_human`."
+         "\n"
+         "\nPROTOCOL 4: SAFETY"
+         "\n- If the user asks to DELETE pages or overwrite a file, verify the filename first if you used fuzzy matching."
+         "\n"
+         "\nEXAMPLES (MENTAL MODEL):"
+         "\n1. **Ambiguity Loop:** User: 'Merge' -> Max: `ask_human('Which files?')` -> User: 'A and B' -> Max: `ask_human('Output name?')` -> User: 'Out' -> Max: `merge_pdfs(...)`."
+         "\n2. **Lazy Rotation:** User: 'Rotate A.pdf 90' -> Max: `rotate_pages(..., pages='all')`."
+         "\n3. **Password:** User: 'Unlock A.pdf' -> Max: `ask_human('Password?')` -> User: '123' -> Max: `decrypt_pdf(..., password='123')`."
+         "\n4. **Recovery:** User: 'Rotate ghost' -> Tool: 'Error' -> Max: `list_files()` -> Max: 'Ah, found ghost_v2.pdf' -> Max: `ask_human('Did you mean ghost_v2?')`."
         ),
         ("placeholder", "{chat_history}"),
         ("human", "{input}"),
@@ -83,14 +93,14 @@ def get_agent_executor():
     ])
     
     agent = create_tool_calling_agent(llm, tools=defined_tools, prompt=prompt)
-    return AgentExecutor(agent=agent, tools=defined_tools, verbose=True)
+    return AgentExecutor(agent=agent, tools=defined_tools, verbose=verbose)
 
 
-def run_max(user_query: str):
+def run_max(user_query: str, verbose= False):
     # Entry point for CLI
     
     try:
-        agent_executor = get_agent_executor()
+        agent_executor = get_agent_executor(verbose=verbose)
         result = agent_executor.invoke({"input": user_query})
         return result["output"]
     

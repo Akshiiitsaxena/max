@@ -8,21 +8,40 @@ from max_pdf.agent import run_max
 from max_pdf.ui import global_status
 
 # Init CLI app
-app = typer.Typer()
+app = typer.Typer(
+    name="max",
+    help="Max: The AI-Powered PDF CLI Tool",
+    add_completion=False,
+    no_args_is_help=True
+)
 console = Console()
 
-@app.command()
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
 def main(
-    query_parts: List[str] = typer.Argument(..., help="The request for Max, in natural language :)"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show AI logs.")
+    ctx: typer.Context,
+    show_thinking: bool = typer.Option(
+        False, 
+        "--show-thinking", 
+        help="Reveal Max's internal thought process and tool calls."
+    )
 ):
-    full_query = " ".join(query_parts)
+    full_query = " ".join(ctx.args)
     
-    # start global status  
-    global_status.start()
+    if not full_query:
+        console.print("[yellow]Please provide a command. Example: max merge files[/yellow]")
+        raise typer.Exit()
+    
+    if not show_thinking:
+        # start global status  
+        global_status.start()
+    
     try:
-        response = run_max(full_query)
-        global_status.stop()
+        response = run_max(full_query, verbose=show_thinking)
+        
+        if not show_thinking:
+            global_status.stop()
         
         console.print(Panel(
             Markdown(str(response)),
@@ -32,6 +51,8 @@ def main(
         ))
     
     except Exception as e:
+        if not show_thinking:
+            global_status.stop()
         console.print(f"error: {e}")
             
 if __name__ == "__main__":
