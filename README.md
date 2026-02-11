@@ -8,7 +8,7 @@ So I built **Max**.
 
 It's a simple CLI tool that lets you manipulate PDFs using natural language. It runs locally on your machine—your files and passwords **never** leave your system. The AI (Google Gemini) just translates your English into commands; it never sees the actual content of your PDFs.
 
-![alt text](https://github.com/Akshiiitsaxena/max/max-ss.png "Demo Screenshot")
+![alt text](max-ss.png "Demo Screenshot")
 
 ## How it works
 
